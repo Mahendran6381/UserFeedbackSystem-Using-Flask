@@ -1,33 +1,42 @@
+from tokenize import String
 from flask import Flask, render_template, request
 from flask.typing import StatusCode
 import mysql.connector
 
 mydb = mysql.connector.connect(
     host="localhost",
-    user = "root",
-    password ="kalisee",
-    database="feedback"
+    user="root",
+    password="kalisee",
+    database="feedback",
+    auth_plugin='mysql_native_password'
 )
 cursor = mydb.cursor()
 
 app = Flask(__name__)
 
+
 class User():
     userArr = []
-    def __init__(self,name,staff_name,rating,detail) -> None:
-        self.name = name
-        self.staff_name = staff_name
-        self.rating = rating
-        self.detail = detail
-        
 
-    def insertion(self):
-        query = f"insert into user_feedback (name,staff_name,rating,detail) values ( {self.name} ,{self.staff_name} ,{self.rating} ,{self.detail})"
+    def __init__(self, name, staff_name, rating, detail) -> None:
+        self.__name = name
+        self.__staff_name = staff_name
+        self.__rating = rating
+        self.__detail = detail
+        User.userArr.append(self)
+
+    def insertion(self) -> String:
+        query = f"insert into user_feedback (name,staff_name,rating,detail) values ( '{self.__name}' ,'{self.__staff_name}' ,{self.__rating} ,'{self.__detail}')"
+        cursor.execute(query)
+        mydb.commit()
+        return str(cursor.rowcount) + "record Inserted"
 
     @classmethod
-    def deletion(cls)    
-
-        
+    def deletion(cls, name) -> String:
+        query = f"delete from user_feedback where name = {name}"
+        cursor.execute(query)
+        mydb.commit()
+        return "deleted"
 
 
 @app.route('/')
@@ -45,6 +54,8 @@ def submit():
         if name == "" or staff_name == "":
             return render_template("index.html", message="Please enter The required Fields")
         print(name, staff_name, rating, detail)
+        newObj = User(name, staff_name, rating, detail)
+        print(newObj.insertion())
         return render_template('success.html')
 
 
