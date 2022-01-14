@@ -1,7 +1,11 @@
+from email import message
 from tokenize import String
 from flask import Flask, render_template, request
 from flask.typing import StatusCode
 import mysql.connector
+from email.mime.text import MIMEText
+import smtplib
+
 
 mydb = mysql.connector.connect(
     host="localhost",
@@ -15,10 +19,37 @@ cursor = mydb.cursor()
 app = Flask(__name__)
 
 
-class User():
+class SendEmail():
+    def __init__(self, name, staff_name, rating, detail) -> None:
+        self.name = name
+        self.staff_name = staff_name
+        self.rating = rating
+        self.detail = detail
+        self.port = 2525
+        self.username = "7a3de55faaa936"
+        self.password = "d4b110ef5db0a7"
+        self.host = "smtp.mailtrap.io"
+
+    def send_email(self):
+        sender_mail = "email1@example.com"
+        receiver_email = "email2@example.com"
+        message = f"<h3>User Feedback system</h3><ul><li>Customer : {self.name}</li><li>Staff Name : {self.staff_name}</li><li>Rating : {self.rating}</li><li>Detail : {self.detail}</li></ul>"
+        msg = MIMEText(message, 'html')
+        msg["Subject"] = "User FeedBack Details"
+        msg["From"] = sender_mail
+        msg['To'] = receiver_email
+
+        with smtplib.SMTP(self.host, self.port) as server:
+            server.login(self.username, self.password)
+            server.sendmail(sender_mail, receiver_email, msg.as_string())
+        return "Success"
+
+
+class User(SendEmail):
     userArr = []
 
     def __init__(self, name, staff_name, rating, detail) -> None:
+        super().__init__(name, staff_name, rating, detail)
         self.__name = name
         self.__staff_name = staff_name
         self.__rating = rating
@@ -29,6 +60,7 @@ class User():
         query = f"insert into user_feedback (name,staff_name,rating,detail) values ( '{self.__name}' ,'{self.__staff_name}' ,{self.__rating} ,'{self.__detail}')"
         cursor.execute(query)
         mydb.commit()
+        print(self.send_email())
         return str(cursor.rowcount) + "record Inserted"
 
     @classmethod
