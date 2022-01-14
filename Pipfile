@@ -9,6 +9,7 @@ psycopg2 = "*"
 flask-sqlalchemy = "*"
 flask-mysqldb = "*"
 mysql-connector = "*"
+secure-smtplib = "*"
 
 [dev-packages]
 
